@@ -1,4 +1,5 @@
 import json
+import imp
 import os
 import subprocess
 
@@ -39,4 +40,9 @@ def loadJson2Obj(script):
     with open(script) as fd:
         data = json.load(fd)
     return data
+
+def loadModule(module_name, module_path):
+    imp_fp, imp_pathname, imp_description = imp.find_module(module_name, module_path)
+    module = imp.load_module('packageComponent', imp_fp, imp_pathname, imp_description)
+    return module
 

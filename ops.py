@@ -9,25 +9,29 @@ def appendCmd(cmd, raw_data):
     return cmd
 
 def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE):
+    ret_code = 0
     DEBUG = debug
     cmd_str = ''
     response = []
     if DEBUG == False:
         if os.name == "nt":
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=proc_output)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE)
         else:
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=proc_output)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE)
 
-        if proc_output == subprocess.PIPE:
-            response = proc.communicate()
+        #if proc_output == subprocess.PIPE:
+        tmp_response = proc.communicate()
 
-        proc.wait()
+        ret_code = proc.wait()
 
-        if proc_output == subprocess.PIPE:
-            if response[0] :
-                print "    *" + response[0]
-            if response[1] :
-                print "    *" + response[1]
+        #if proc_output == subprocess.PIPE:
+        #    if tmp_response[0] :
+        #        print "    *" + tmp_response[0]
+        #    if tmp_response[1] :
+        #        print "    *" + tmp_response[1]
+
+    response = list(tmp_response)
+    response.append(ret_code)
 
     if DEBUG == True:
         for cmd in cmd_list:

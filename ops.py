@@ -8,16 +8,16 @@ def appendCmd(cmd, raw_data):
         cmd.append(data)
     return cmd
 
-def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE):
+def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=None):
     ret_code = 0
     DEBUG = debug
     cmd_str = ''
     response = []
     if DEBUG == False:
         if os.name == "nt":
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input)
         else:
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input)
 
         #if proc_output == subprocess.PIPE:
         tmp_response = proc.communicate()

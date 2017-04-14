@@ -4,17 +4,23 @@ import os
 
 COMMIT_MSG_FILE="commit_msg"
 
-def clone(remote_repo_path):
+def clone(remote_repo_path, packages_dir):
     CMD = ['git', 'clone', remote_repo_path]
-    return ops.execCmd(CMD, ".", False, None)
+    res = ops.execCmd(CMD, packages_dir, False, None)
+    print packages_dir
+    print res
+    return res
 
 def pull(local_repo_path):
     CMD = ['git', 'pull']
     return ops.execCmd(CMD, local_repo_path, False, None)
 
 def status(local_repo_path):
-    CMD = ['git', 'status']
-    return ops.execCmd(CMD, local_repo_path, False, None)
+    CMD = ['git', 'status', '-s']
+    print "-Status-------------------"
+    ret = ops.execCmd(CMD, local_repo_path, False, None)
+    print "--------------------------"
+    return ret
 
 def latest_commit_hash(local_repo_path):
     CMD = ['git', 'log', '--pretty=format:%H', '-1']
@@ -79,6 +85,7 @@ def read_commit_msg(local_repo_path, major, minor, aux):
         print "Please write the commit message in [" + commit_msg_file + "]"
         sys.exit(1)
 
+    print "read commit message from [" + commit_msg_file + "]"
     commit_msg = ''
     commit_msg += 'MAJOR_NUM=' + str(major) + os.linesep
     commit_msg += 'MINOR_NUM=' + str(minor) + os.linesep
@@ -89,25 +96,15 @@ def read_commit_msg(local_repo_path, major, minor, aux):
 
     return commit_msg
 
-def commit(local_repo_path):
+def get_commit_msg(local_repo_path, major, minor, aux):
+    commit_msg = read_commit_msg(local_repo_path, major, minor, aux)
+    return commit_msg
+
+def commit(local_repo_path, major, minor, aux, commit_msg):
     ret = None
     pre_status = 0
 
-    version = get_version_from_log(local_repo_path)
-    major = version[0]
-    minor = version[1] + 1
-    aux = version[2]
-
     update_version_header(local_repo_path, major, minor, aux)
-    commit_msg = read_commit_msg(local_repo_path, major, minor, aux)
-
-    print "--------------------------"
-    print commit_msg
-    print "--------------------------"
-    input_answer = raw_input(">>commit(y/n)")
-    if not (input_answer == "y"):
-        print "Answer " + input_answer
-        sys.exit(0)
 
     CMD = ['git', 'add', '.']
     ret = ops.execCmd(CMD, local_repo_path, False, None)
@@ -122,9 +119,6 @@ def commit(local_repo_path):
     if pre_status > 0:
         print 'commit failed'
         sys.exit(1)
-
-    #latest_commit_hash(local_repo_path)
-    #sys.exit(1)
 
     CMD = ['git', 'push']
     ret = ops.execCmd(CMD, local_repo_path, False, None)

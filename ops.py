@@ -3,6 +3,10 @@ import imp
 import os
 import subprocess
 
+def mkdir(dir_path):
+    if not os.path.exist(dir_path):
+        os.makedir(dir_path)
+
 def appendCmd(cmd, raw_data):
     for data in raw_data:
         cmd.append(data)

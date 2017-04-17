@@ -93,8 +93,11 @@ def update_version_header(local_repo_path, major, minor, aux):
 
     os.rename(new_version_file, old_version_file)
 
+def get_commit_msg_file(local_repo_path):
+    return local_repo_path + os.sep + COMMIT_MSG_FILE
+
 def read_commit_msg(local_repo_path, major, minor, aux):
-    commit_msg_file = local_repo_path + os.sep + COMMIT_MSG_FILE
+    commit_msg_file = get_commit_msg_file(local_repo_path)
     if not os.path.exists(commit_msg_file):
         print "Please write the commit message in [" + commit_msg_file + "]"
         sys.exit(1)

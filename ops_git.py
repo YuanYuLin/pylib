@@ -7,24 +7,35 @@ COMMIT_MSG_FILE="commit_msg"
 def clone(remote_repo_path, packages_dir):
     CMD = ['git', 'clone', remote_repo_path]
     res = ops.execCmd(CMD, packages_dir, False, None)
-    print packages_dir
-    print res
     return res
 
 def pull(local_repo_path):
     CMD = ['git', 'pull']
-    return ops.execCmd(CMD, local_repo_path, False, None)
+    res = ['', '', 1]
+    if os.path.exists(local_repo_path + os.sep + ".git"):
+        res = ops.execCmd(CMD, local_repo_path, False, None)
+    else:
+        print "NOT a git repository!!"
+    return res
 
 def status(local_repo_path):
     CMD = ['git', 'status', '-s']
+    ret = ['', '', 1]
     print "-Status-------------------"
-    ret = ops.execCmd(CMD, local_repo_path, False, None)
+    if os.path.exists(local_repo_path + os.sep + ".git"):
+        ret = ops.execCmd(CMD, local_repo_path, False, None)
+    else:
+        print "NOT a git repository!!"
     print "--------------------------"
     return ret
 
 def latest_commit_hash(local_repo_path):
     CMD = ['git', 'log', '--pretty=format:%H', '-1']
-    res = ops.execCmd(CMD, local_repo_path, False)
+    res = ['','',1]
+    if os.path.exists(local_repo_path + os.sep + ".git"):
+        res = ops.execCmd(CMD, local_repo_path, False)
+    else:
+        print "NOT a git repository!!"
     commit_hash = res[0]
     return commit_hash
 
@@ -33,17 +44,20 @@ def get_version_from_log(local_repo_path):
     minor = 0
     aux = 0
     CMD = ['git', 'log', '--pretty=format:%B', '-1']
-    res = ops.execCmd(CMD, local_repo_path, False)
-    commit_msg = res[0]
-    commit_msg_list = commit_msg.split('\n')
-    for msg in commit_msg_list:
-        msg = msg.strip()
-        if msg.startswith('MAJOR_NUM'):
-            major = int(msg.split('=')[1])
-        if msg.startswith('MINOR_NUM'):
-            minor = int(msg.split('=')[1])
-        if msg.startswith('AUX_NUM'):
-            aux = int(msg.split('=')[1])
+    res = ['', '', 1]
+    if os.path.exists(local_repo_path + os.sep + ".git"):
+        res = ops.execCmd(CMD, local_repo_path, False)
+        commit_msg = res[0]
+        commit_msg_list = commit_msg.split('\n')
+        for msg in commit_msg_list:
+            msg = msg.strip()
+            if msg.startswith('MAJOR_NUM'):
+                major = int(msg.split('=')[1])
+            if msg.startswith('MINOR_NUM'):
+                minor = int(msg.split('=')[1])
+            if msg.startswith('AUX_NUM'):
+                aux = int(msg.split('=')[1])
+
     return [major, minor, aux]
 
 def update_version_header(local_repo_path, major, minor, aux):
@@ -103,6 +117,13 @@ def get_commit_msg(local_repo_path, major, minor, aux):
 def commit(local_repo_path, major, minor, aux, commit_msg):
     ret = None
     pre_status = 0
+
+    if not os.path.exists(local_repo_path + os.sep + ".git"):
+        print "NOT a git repository!!"
+        sys.exit(1)
+
+    # pull from remote repository
+    pull(local_repo_path)
 
     update_version_header(local_repo_path, major, minor, aux)
 

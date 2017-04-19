@@ -3,9 +3,14 @@ import imp
 import os
 import subprocess
 import shutil
+import tarfile
 
 def copyto(src, dst):
     shutil.copyfile(src, dst)
+
+def touch(file_name, time_stamp=None):
+    with open(file_name, 'a'):
+        os.utime(file_name, time_stamp)
 
 def pkg_mkdir(pkg_path, dir_path):
     abspath = os.path.abspath(pkg_path + os.sep + dir_path)
@@ -61,8 +66,34 @@ def loadJson2Obj(script):
         data = json.load(fd)
     return data
 
-def loadModule(module_name, module_path):
-    imp_fp, imp_pathname, imp_description = imp.find_module(module_name, module_path)
-    module = imp.load_module('packageComponent', imp_fp, imp_pathname, imp_description)
+def loadModule(module_name, module_file, module_path):
+    imp_fp, imp_pathname, imp_description = imp.find_module(module_file, module_path)
+    module = imp.load_module(module_name, imp_fp, imp_pathname, imp_description)
     return module
+
+def getEnv(key):
+    return os.environ[key]
+
+def exportEnv(env_list):
+    for env in env_list:
+        key = env
+        val = env_list[env]
+        os.environ[key] = val
+
+def addEnv(key, val):
+    env = {}
+    env_val = os.environ[key]
+    env[key] = env_val + ";" + val
+
+    return env
+
+def setEnv(key, val):
+    env = {}
+    env[key] = val
+    return env
+
+def unTarBz2(src_file, dst_dir):
+    bz2 = tarfile.open(src_file)
+    bz2.extractall(dst_dir)
+    bz2.close()
 

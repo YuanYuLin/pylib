@@ -1,12 +1,36 @@
 import json
 import imp
 import os
+import sys
 import subprocess
 import shutil
 import tarfile
+import lzma
+import contextlib
 
-def copyto(src, dst):
-    shutil.copyfile(src, dst)
+def path_join(src, src2):
+    return os.path.join(src, src2)
+
+def ln(workspace, src, dst):
+    CMD = ['ln', '-s', src, dst]
+    execCmd(CMD, workspace, False, None)
+    
+def copyto(src, dst, workspace = None):
+    CMD = ['cp', '-avr', src, dst]
+    if workspace == None:
+        res = execCmd(CMD, ".", False, None)
+    else:
+        res = execCmd(CMD, workspace, False, None)
+    if res[2] > 0:
+        print "error:", res
+        sys.exit(1)
+    #shutil.copyfile(src, dst)
+
+def isExist(path):
+    if os.path.exists(path):
+        return True
+    else:
+        return False
 
 def touch(file_name, time_stamp=None):
     with open(file_name, 'a'):
@@ -21,7 +45,9 @@ def pkg_mkdir(pkg_path, dir_path):
 
 def mkdir(dir_path):
     if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
+        CMD = ['mkdir', '-p', dir_path]
+        execCmd(CMD, ".", False, None)
+        #os.mkdir(dir_path)
 
 def appendCmd(cmd, raw_data):
     for data in raw_data:
@@ -96,4 +122,9 @@ def unTarBz2(src_file, dst_dir):
     bz2 = tarfile.open(src_file)
     bz2.extractall(dst_dir)
     bz2.close()
+
+def unTarXz(src_file, dst_dir):
+    with contextlib.closing(lzma.LZMAFile(src_file)) as xz:
+        with tarfile.open(fileobj=xz) as f:
+            f.extractall(dst_dir)
 

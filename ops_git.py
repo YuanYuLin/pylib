@@ -99,8 +99,9 @@ def get_commit_msg_file(local_repo_path):
 def read_commit_msg(local_repo_path, major, minor, aux):
     commit_msg_file = get_commit_msg_file(local_repo_path)
     if not os.path.exists(commit_msg_file):
-        print "Please write the commit message in [" + commit_msg_file + "]"
-        sys.exit(1)
+        ops.touch(commit_msg_file)
+        #print "Please write the commit message in [" + commit_msg_file + "]"
+        #sys.exit(1)
 
     print "read commit message from [" + commit_msg_file + "]"
     commit_msg = ''

@@ -38,12 +38,11 @@ def touch(file_name, time_stamp=None):
 
 def pkg_mkdir(pkg_path, dir_path):
     abspath = os.path.abspath(pkg_path + os.sep + dir_path)
-    print abspath
     if not os.path.exists(abspath):
         os.makedirs(abspath)
     return abspath
 
-def mkdir(dir_path):
+def mkdir(dir_path, workspace=None):
     if not os.path.exists(dir_path):
         CMD = ['mkdir', '-p', dir_path]
         execCmd(CMD, ".", False, None)
@@ -124,7 +123,11 @@ def unTarBz2(src_file, dst_dir):
     bz2.close()
 
 def unTarXz(src_file, dst_dir):
+    CMD = ['tar', 'Jxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
+    '''
     with contextlib.closing(lzma.LZMAFile(src_file)) as xz:
         with tarfile.open(fileobj=xz) as f:
             f.extractall(dst_dir)
+    '''
 

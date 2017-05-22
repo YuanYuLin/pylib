@@ -2,7 +2,7 @@ import ops
 import sys
 import os
 
-COMMIT_MSG_FILE="commit_msg"
+COMMIT_MSG_FILE="COMMIT_MSG"
 
 def clone(remote_repo_path, packages_dir):
     CMD = ['git', 'clone', remote_repo_path]
@@ -21,12 +21,13 @@ def pull(local_repo_path):
 def status(local_repo_path):
     CMD = ['git', 'status', '-s']
     ret = ['', '', 1]
-    print "-Status-------------------"
+    #print "-Status-------------------"
     if os.path.exists(local_repo_path + os.sep + ".git"):
-        ret = ops.execCmd(CMD, local_repo_path, False, None)
+        ret = ops.execCmd(CMD, local_repo_path, False)
     else:
+        return None
         print "NOT a git repository!!"
-    print "--------------------------"
+    #print "--------------------------"
     return ret
 
 def latest_commit_hash(local_repo_path):
@@ -64,6 +65,10 @@ def update_version_header(local_repo_path, major, minor, aux):
     pkg_repo = local_repo_path
     new_version_file = pkg_repo + os.sep + "version.h.new"
     old_version_file = pkg_repo + os.sep + "version.h"
+
+    if not os.path.exists(old_version_file):
+        ops.touch(old_version_file)
+
     macros = []
     with open(new_version_file, 'w') as h_new_file:
         with open(old_version_file) as h_file:
@@ -93,8 +98,8 @@ def update_version_header(local_repo_path, major, minor, aux):
 
     os.rename(new_version_file, old_version_file)
 
-def get_commit_msg_file(local_repo_path):
-    return local_repo_path + os.sep + COMMIT_MSG_FILE
+def get_commit_msg_file(commit_msg_path):
+    return commit_msg_path + os.sep + COMMIT_MSG_FILE
 
 def read_commit_msg(local_repo_path, major, minor, aux):
     commit_msg_file = get_commit_msg_file(local_repo_path)

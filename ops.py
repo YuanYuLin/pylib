@@ -9,7 +9,8 @@ import lzma
 import contextlib
 
 def path_join(src, src2):
-    return os.path.join(src, src2)
+    return src + "/" + src2
+#    return os.path.join(src, src2)
 
 def ln(workspace, src, dst):
     CMD = ['ln', '-s', src, dst]
@@ -25,6 +26,16 @@ def copyto(src, dst, workspace = None):
         print "error:", res
         sys.exit(1)
     #shutil.copyfile(src, dst)
+
+def rm_file(src, workspace = None):
+    CMD = ['rm', '-f', src]
+    if workspace == None:
+        res = execCmd(CMD, ".", False, None)
+    else:
+        res = execCmd(CMD, workspace, False, None)
+    if res[2] > 0:
+        print "error:", res
+        sys.exit(1)
 
 def isExist(path):
     if os.path.exists(path):
@@ -42,6 +53,14 @@ def pkg_mkdir(pkg_path, dir_path):
         os.makedirs(abspath)
     return abspath
 
+def mknod_block(pkg_path, dev_name, dev_major, dev_minor):
+    CMD = ['mknod', '-m', '660', dev_name, 'b', dev_major, dev_minor]
+    execCmd(CMD, pkg_path, False, None)
+
+def mknod_char(pkg_path, dev_name, dev_major, dev_minor):
+    CMD = ['mknod', '-m', '660', dev_name, 'c', dev_major, dev_minor]
+    execCmd(CMD, pkg_path, False, None)
+
 def mkdir(dir_path, workspace=None):
     if not os.path.exists(dir_path):
         CMD = ['mkdir', '-p', dir_path]
@@ -53,7 +72,7 @@ def appendCmd(cmd, raw_data):
         cmd.append(data)
     return cmd
 
-def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=None):
+def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=None, env_config=None):
     ret_code = 0
     DEBUG = debug
     cmd_str = ''
@@ -63,7 +82,7 @@ def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=N
         if os.name == "nt":
             proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input)
         else:
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input, env=env_config)
 
         #if proc_output == subprocess.PIPE:
         tmp_response = proc.communicate()
@@ -122,6 +141,10 @@ def unTarBz2(src_file, dst_dir):
     bz2.extractall(dst_dir)
     bz2.close()
 
+def unTarGz(src_file, dst_dir):
+    CMD = ['tar', 'zxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
+
 def unTarXz(src_file, dst_dir):
     CMD = ['tar', 'Jxvf', src_file, '-C', dst_dir]
     execCmd(CMD, dst_dir, False, None)
@@ -130,4 +153,11 @@ def unTarXz(src_file, dst_dir):
         with tarfile.open(fileobj=xz) as f:
             f.extractall(dst_dir)
     '''
+
+def kbuild_config_replace(config_infile, config_outfile, key, new_value):
+    with open(config_infile) as in_cfg, open(config_outfile, 'w') as out_cfg:
+        for line in in_cfg:
+            if line.startswith(key + "="):
+                line = line.replace("<#CONFIG_VALUE#>", new_value)
+            out_cfg.write(line)
 

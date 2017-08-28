@@ -1,4 +1,5 @@
 import json
+import hashlib
 import imp
 import os
 import sys
@@ -72,7 +73,10 @@ def appendCmd(cmd, raw_data):
         cmd.append(data)
     return cmd
 
-def execCmd(cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=None, env_config=None):
+def execCmd(raw_cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_input=None, env_config=None):
+    cmd_list = []
+    for cmd_arg in raw_cmd_list:
+        cmd_list.append(str(cmd_arg))
     ret_code = 0
     DEBUG = debug
     cmd_str = ''
@@ -135,6 +139,27 @@ def setEnv(key, val):
     env = {}
     env[key] = val
     return env
+
+def splitFile(workspace, file_name, split_size, split_prefix, split_postfix):
+    split_file_name = split_prefix + file_name + split_postfix
+    CMD = ['split', '--verbose', '-d', '-b', split_size, file_name, split_file_name]
+    return execCmd(CMD, workspace, False)
+
+def mergeFiles(workspace, output_file_name, file_list):
+    fp = file(path_join(workspace, output_file_name), 'wb')
+    for file_name in file_list:
+        with open(path_join(workspace, file_name)) as src_file:
+            fp.write(src_file.read())
+    fp.close()
+
+    return path_join(workspace, output_file_name)
+
+def file_md5_str(full_file_name):
+    hash_md5 = hashlib.md5()
+    with open(full_file_name) as fp:
+        for chunk in iter(lambda: fp.read(4096), b""):
+            hash_md5.update(chunk)
+    return str(hash_md5.hexdigest())
 
 def unTarBz2(src_file, dst_dir):
     bz2 = tarfile.open(src_file)

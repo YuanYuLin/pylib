@@ -19,7 +19,7 @@ def pull(local_repo_path):
     return res
 
 def status(local_repo_path):
-    CMD = ['git', 'status', '-s']
+    CMD = ['git', 'status', '-v']
     ret = ['', '', 1]
     #print "-Status-------------------"
     if os.path.exists(local_repo_path + os.sep + ".git"):

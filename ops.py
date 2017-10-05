@@ -17,6 +17,16 @@ def ln(workspace, src, dst):
     CMD = ['ln', '-s', src, dst]
     execCmd(CMD, workspace, False, None)
     
+def sudo_copyto(src, dst, workspace = None):
+    CMD = ['sudo', 'cp', '-avr', src, dst]
+    if workspace == None:
+        res = execCmd(CMD, ".", False, None)
+    else:
+        res = execCmd(CMD, workspace, False, None)
+    if res[2] > 0:
+        print "error:", res
+        sys.exit(1)
+
 def copyto(src, dst, workspace = None):
     CMD = ['cp', '-avr', src, dst]
     if workspace == None:
@@ -55,12 +65,24 @@ def pkg_mkdir(pkg_path, dir_path):
     return abspath
 
 def mknod_block(pkg_path, dev_name, dev_major, dev_minor):
-    CMD = ['mknod', '-m', '660', dev_name, 'b', dev_major, dev_minor]
-    execCmd(CMD, pkg_path, False, None)
+    CMD = ['sudo', 'mknod', '-m', '660', dev_name, 'b', dev_major, dev_minor]
+    res = execCmd(CMD, pkg_path, False, None)
+    print res
+    if res[2] != 0:
+        sys.exit(1)
 
 def mknod_char(pkg_path, dev_name, dev_major, dev_minor):
-    CMD = ['mknod', '-m', '660', dev_name, 'c', dev_major, dev_minor]
-    execCmd(CMD, pkg_path, False, None)
+    CMD = ['sudo', 'mknod', '-m', '660', dev_name, 'c', dev_major, dev_minor]
+    res = execCmd(CMD, pkg_path, False, None)
+    print res
+    if res[2] != 0:
+        sys.exit(1)
+
+def sudo_mkdir(dir_path, workspace=None):
+    if not os.path.exists(dir_path):
+        CMD = ['sudo', 'mkdir', '-p', dir_path]
+        execCmd(CMD, ".", False, None)
+        #os.mkdir(dir_path)
 
 def mkdir(dir_path, workspace=None):
     if not os.path.exists(dir_path):
@@ -84,7 +106,7 @@ def execCmd(raw_cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_inp
     tmp_response = []
     if DEBUG == False:
         if os.name == "nt":
-            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input)
+            proc=subprocess.Popen(cmd_list, cwd=work_dir, shell=True, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input, env=env_config)
         else:
             proc=subprocess.Popen(cmd_list, cwd=work_dir, stdout=proc_output, stderr=subprocess.PIPE, stdin=proc_input, env=env_config)
 
@@ -161,13 +183,36 @@ def file_md5_str(full_file_name):
             hash_md5.update(chunk)
     return str(hash_md5.hexdigest())
 
-def unTarBz2(src_file, dst_dir):
-    bz2 = tarfile.open(src_file)
-    bz2.extractall(dst_dir)
-    bz2.close()
+def unTarBz2SUDO(src_file, dst_dir):
+    if not os.path.exists(dst_dir):
+        CMD = ['sudo', 'mkdir', '-p', dst_dir]
+        execCmd(CMD, ".", False, None)
+    CMD = ['sudo', 'tar', 'jxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
 
+def unTarBz2(src_file, dst_dir):
+    CMD = ['tar', 'jxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
+    #bz2 = tarfile.open(src_file)
+    #bz2.extractall(dst_dir)
+    #bz2.close()
+
+def unTarGzSUDO(src_file, dst_dir):
+    if not os.path.exists(dst_dir):
+        CMD = ['sudo', 'mkdir', '-p', dst_dir]
+        execCmd(CMD, ".", False, None)
+    CMD = ['sudo', 'tar', 'zxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
+ 
 def unTarGz(src_file, dst_dir):
     CMD = ['tar', 'zxvf', src_file, '-C', dst_dir]
+    execCmd(CMD, dst_dir, False, None)
+
+def unTarXzSUDO(src_file, dst_dir):
+    if not os.path.exists(dst_dir):
+        CMD = ['sudo', 'mkdir', '-p', dst_dir]
+        execCmd(CMD, ".", False, None)
+    CMD = ['sudo', 'tar', 'Jxvf', src_file, '-C', dst_dir]
     execCmd(CMD, dst_dir, False, None)
 
 def unTarXz(src_file, dst_dir):
@@ -179,10 +224,17 @@ def unTarXz(src_file, dst_dir):
             f.extractall(dst_dir)
     '''
 
-def kbuild_config_replace(config_infile, config_outfile, key, new_value):
-    with open(config_infile) as in_cfg, open(config_outfile, 'w') as out_cfg:
+def kbuild_config_replace(config_file, key, new_value):
+    src_config_file = config_file + '.src'
+    dst_config_file = config_file + '.dst'
+    copyto(config_file, src_config_file)
+    with open(src_config_file) as in_cfg, open(dst_config_file, 'w') as out_cfg:
         for line in in_cfg:
             if line.startswith(key + "="):
                 line = line.replace("<#CONFIG_VALUE#>", new_value)
             out_cfg.write(line)
+
+    copyto(dst_config_file, config_file)
+    rm_file(src_config_file)
+    rm_file(dst_config_file)
 

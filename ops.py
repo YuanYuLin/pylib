@@ -14,11 +14,14 @@ def path_join(src, src2):
 #    return os.path.join(src, src2)
 
 def ln(workspace, src, dst):
+    if isExist(path_join(workspace, dst)):
+      rm_file(path_join(workspace, dst))
+
     CMD = ['ln', '-s', src, dst]
     execCmd(CMD, workspace, False, None)
     
 def sudo_copyto(src, dst, workspace = None):
-    CMD = ['sudo', 'cp', '-avr', src, dst]
+    CMD = ['sudo', 'cp', '-favr', src, dst]
     if workspace == None:
         res = execCmd(CMD, ".", False, None)
     else:
@@ -49,6 +52,9 @@ def rm_file(src, workspace = None):
         sys.exit(1)
 
 def isExist(path):
+    if os.path.islink(path):
+        return True
+
     if os.path.exists(path):
         return True
     else:
@@ -121,10 +127,14 @@ def execCmd(raw_cmd_list, work_dir, debug, proc_output=subprocess.PIPE, proc_inp
         #    if tmp_response[1] :
         #        print "    *" + tmp_response[1]
 
-    response = list(tmp_response)
-    response.append(ret_code)
+        response = list(tmp_response)
+        response.append(ret_code)
 
-    if DEBUG == True:
+        if response[2] != 0:
+            print response[1]
+            sys.exit(1)
+        return response
+    else:
         for cmd in cmd_list:
             cmd_str += cmd + ' '
         print cmd_str
@@ -153,7 +163,7 @@ def exportEnv(env_list):
 def addEnv(key, val):
     env = {}
     env_val = os.environ[key]
-    env[key] = env_val + ";" + val
+    env[key] = env_val + ":" + val
 
     return env
 

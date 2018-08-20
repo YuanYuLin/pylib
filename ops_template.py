@@ -35,3 +35,8 @@ def generateTemplateByText(template_text, template_obj):
   output = tmpl.render(root_obj=template_obj)
 
   return output
+  
+def genPkgConfigByFile(pkgcfg_filein, obj):
+    tmpl = SimpleTemplate(name=pkgcfg_filein)
+    output = tmpl.render(obj)
+    return output
